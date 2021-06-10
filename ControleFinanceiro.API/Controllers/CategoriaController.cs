@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using ControleFinanceiro.BLL.Models;
 using ControleFinanceiro.DAL;
-
+using ControleFinanceiro.DAL.Interface;
 
 namespace ControleFinanceiro.API.Controllers
 {
@@ -15,23 +15,23 @@ namespace ControleFinanceiro.API.Controllers
     [ApiController]
     public class CategoriaController : ControllerBase
     {
-        private readonly Context _context;
+        private readonly ICategoriaRepository _categoriaRepository;
 
-        public CategoriaController(Context context)
+        public CategoriaController(ICategoriaRepository categoriaRepository)
         {
-            _context = context;
+            _categoriaRepository = categoriaRepository;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Categoria>>> GetCategoria()
         {
-            return await _context.Categorias.Include(c=> c.Tipo).ToListAsync();
+            return await _categoriaRepository.GetAll().ToListAsync();
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Categoria>> GetCategoria(int id)
         {
-            var categoria = await _context.Categorias.FindAsync(id);
+            var categoria = await _categoriaRepository.GetById(id);
             if (categoria == null)
             {
                 return NotFound();
@@ -46,41 +46,54 @@ namespace ControleFinanceiro.API.Controllers
             {
                 return BadRequest();
             }
-
-            _context.Entry(categoria).State = EntityState.Modified;
-
-
-            try
+            //Verifica se nossos dados são validos
+            if (ModelState.IsValid)
             {
-                await _context.SaveChangesAsync();
+                await _categoriaRepository.Update(categoria);
+                return Ok(new
+                {
+                    mensagem = $"Categoria {categoria.Nome} atualizada com sucesso"
+                });
             }
-            catch (Exception ex)
-            {
-
-                throw new Exception(ex.Message);
-            }
-            return NoContent();
+            return BadRequest(ModelState);
+          
         }
-            [HttpPost]
-            public async Task<ActionResult<Categoria>> PostCategoria(Categoria categoria)
+        [HttpPost]
+        public async Task<ActionResult<Categoria>> PostCategoria(Categoria categoria)
+        {
+            if (ModelState.IsValid)
             {
-                _context.Categorias.Add(categoria);
-                await _context.SaveChangesAsync();
-                return CreatedAtAction("GetCategoria", new { id = categoria.Id }, categoria);
-
+                await _categoriaRepository.Add(categoria);
+                return Ok(new
+                {
+                    mensagem = $"Categoria {categoria.Nome} Cadastrada com sucesso"
+                });
             }
+            return BadRequest(ModelState);
+        }
+
         [HttpDelete("{id}")]
         public async Task<ActionResult<Categoria>> DeleteCategoria (int id)
         {
-            var categoria = await _context.Categorias.FindAsync(id);
+            var categoria = await _categoriaRepository.GetById(id);
+
             if(categoria == null)
             {
                 return NotFound();
             }
-            _context.Categorias.Remove(categoria);
-            await _context.SaveChangesAsync();
-            return categoria;
 
+            await _categoriaRepository.Delete(id);
+            return Ok(new
+            {
+                mensagem = $"Categoria {categoria.Nome} excluída com sucesso"
+            });
+
+
+        }
+        [HttpGet("FilterCategorias/{nome}")]
+        public async Task<ActionResult<IEnumerable<Categoria>>> FilterCategoria(string nomeCategoria)
+        {
+            return await _categoriaRepository.FilterCategoria(nomeCategoria).ToListAsync();
         }
     }
 }
