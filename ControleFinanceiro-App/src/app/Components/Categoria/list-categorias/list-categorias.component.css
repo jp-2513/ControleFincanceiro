@@ -1,0 +1,28 @@
+.dadosCategorias {
+  padding: 30px 30px 30px 30px;
+}
+.tabela {
+  width: 100%;
+  padding-top: 30px;
+}
+
+.divCard{
+  padding:50px;
+  width: 600px;
+}
+
+.mat-form-filed.mat-form-field {
+  width: 500px;
+}
+.titulo{
+  position: absolute;
+  left: 5px;
+}
+
+.buttonNewCategoria{
+  display: flex;
+  margin-left: 93%;
+  margin-bottom: 30px;
+  background-color: #424242;
+  color: white;
+}
